@@ -13,6 +13,9 @@ from src.utils.file_handlers import FileHandler
 from src.config.settings import SettingsManager
 from src.utils.validators import ValidationError
 
+import time
+import os
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -105,6 +108,33 @@ class ASCIIArtGenerator:
             },
             'version': self.settings_manager.settings.version
         }
+    
+    def process_gif(
+        self,
+        image_path: str,
+        fps: int = 10,
+        **kwargs
+    ) -> None:
+        """Process and display animated GIF."""
+        try:
+            # Get frame generator
+            frames = self.image_processor.process_gif(
+                image_path,
+                **kwargs
+            )
+
+            # Display animation
+            frame_delay = 1 / fps
+            for frame in frames:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(frame)
+                time.sleep(frame_delay)
+
+        except Exception as e:
+            logger.error(f"Error processing GIF: {e}")
+            raise
+        
+
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -127,6 +157,8 @@ Examples:
                        help='Use characters as repeating pattern instead of gradient')
     parser.add_argument('--color', choices=['none', 'foreground', 'background', 'both'],
                        default='none', help='Color mode for ASCII art')
+    parser.add_argument('--fps', type=int, default=10,
+                       help='Frames per second for GIF animation')
     parser.add_argument('--format', choices=['txt', 'html', 'md'], 
                        default='txt', help='Output format')
 
@@ -138,20 +170,32 @@ def main():
         args = parse_arguments()
         generator = ASCIIArtGenerator()
 
-        # Process image
-        ascii_art = generator.process_image(
-            image_path=args.input,
-            output_path=args.output,
-            width=args.width,
-            remove_bg=args.remove_bg,
-            pattern_mode=args.pattern_mode,
-            color_mode=args.color,
-            chars=args.chars
-        )
+        is_gif = args.input.lower().endswith('.gif')
+        if is_gif:
+                generator.process_gif(
+                image_path=args.input,
+                width=args.width,
+                remove_bg=args.remove_bg,
+                chars=list(args.chars) if args.chars else None,
+                pattern_mode=args.pattern_mode,
+                color_mode=args.color,
+                fps=args.fps
+            )
+        else:
+            # Process image
+            ascii_art = generator.process_image(
+                image_path=args.input,
+                output_path=args.output,
+                width=args.width,
+                remove_bg=args.remove_bg,
+                pattern_mode=args.pattern_mode,
+                color_mode=args.color,
+                chars=args.chars
+            )
         
-        # Print to console if no output file specified
-        if not args.output:
-            print(ascii_art)
+            # Print to console if no output file specified
+            if not args.output:
+                print(ascii_art)
 
         logger.info("Processing completed successfully")
 

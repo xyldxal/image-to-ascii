@@ -246,8 +246,64 @@ class ImageProcessor:
         fg = self._rgb_to_ansi(*rgb)
         bg = fg.replace('Fore', 'Back')
         return f"{fg}{bg}{char}"
+    
+    def process_gif(
+        self,
+        image_path: str,
+        width: Optional[int] = None,
+        remove_bg: bool = False,
+        chars: Optional[List[str]] = None,
+        pattern_mode: bool = False,
+        color_mode: str = 'none',
+        **kwargs
+    ) -> Generator[str, None, None]:
+        """
+        Process GIF and yield ASCII frames.
+        """
+        with Image.open(image_path) as gif:
+            # Check if image is animated
+            is_animated = getattr(gif, "is_animated", False)
+            frames = getattr(gif, "n_frames", 1)
+            
+            if not is_animated:
+                # If it's not a GIF, process as single image
+                yield self.image_to_ascii(
+                    image_path,
+                    width=width,
+                    remove_bg=remove_bg,
+                    chars=chars,
+                    pattern_mode=pattern_mode,
+                    color_mode=color_mode
+                )
+                return
+            try:
+                for frame in range(frames):
+                    gif.seek(frame)
+                    # Convert frame to RGB
+                    rgb_frame = gif.convert('RGB')
+                    
+                    # Save frame temporarily
+                    temp_path = f"temp_frame_{frame}.png"
+                    rgb_frame.save(temp_path)
+                    
+                    # Process frame
+                    ascii_frame = self.image_to_ascii(
+                        temp_path,
+                        width=width,
+                        remove_bg=remove_bg,
+                        chars=chars,
+                        pattern_mode=pattern_mode,
+                        color_mode=color_mode
+                    )
+                    
+                    # Clean up temp file
+                    os.remove(temp_path)
+                    
+                    yield ascii_frame
 
-
+            except Exception as e:
+                print(f"Error processing GIF frame: {e}")
+                raise
 
     def set_custom_chars(self, chars: str) -> None:
         """
@@ -291,6 +347,8 @@ class ImageProcessor:
         image = self._load_image(image_path)
         image.thumbnail(max_size)
         image.show()
+
+
 
     @property
     def supported_formats(self) -> set:
