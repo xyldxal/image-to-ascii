@@ -2,13 +2,17 @@ from PIL import Image
 from rembg import remove
 import numpy as np
 import io
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Tuple, Union, List, Generator
 from pathlib import Path
 from ..utils.validators import validate_image_path
 from .char_processor import CharacterProcessor
 
 from colorama import init, Fore, Back, Style
 import colorsys
+
+import time
+import os
+
 
 init(convert=True)
 
@@ -160,48 +164,43 @@ class ImageProcessor:
         return '\n'.join(ascii_str) + Style.RESET_ALL
 
     def _convert_to_ascii_with_mask(
-            self,
-            image: Image.Image,
-            mask: Image.Image,
-            chars: List[str],
-            pattern_mode: bool = False
-        ) -> str:
-            """
-            Convert grayscale image to ASCII art using alpha mask for background.
-            """
-            pixels = np.array(image)
-            mask_pixels = np.array(mask)
-            ascii_str = []
-            
-            if pattern_mode:
-            # Pattern mode with background removal
-                pattern = ''.join(chars)
-                pattern_length = len(pattern)
-            
-                for row_idx, row in enumerate(pixels):
-                    ascii_row = []
-                    for col_idx, pixel in enumerate(row):
-                        if mask_pixels[row_idx][col_idx] < 128:
-                            ascii_row.append(' ')
-                        else:
-                            pattern_idx = col_idx % pattern_length
-                            ascii_row.append(pattern[pattern_idx])
-                    ascii_str.append(''.join(ascii_row))
-            else:
-                # Gradient mode with background removal
-                intensity_levels = 255 / (len(chars) - 1)
-                
-                for row_idx, row in enumerate(pixels):
-                    ascii_row = []
-                    for col_idx, pixel in enumerate(row):
-                        if mask_pixels[row_idx][col_idx] < 128:
-                            ascii_row.append(' ')
-                        else:
-                            char_index = int(pixel / intensity_levels)
-                            ascii_row.append(chars[char_index])
-                    ascii_str.append(''.join(ascii_row))
-            
-            return '\n'.join(ascii_str)
+        self,
+        image: Image.Image,
+        mask: Image.Image,
+        chars: List[str],
+        pattern_mode: bool,
+        color_image: Image.Image,
+        color_mode: str = 'none'
+    ) -> str:
+        """Convert grayscale image to ASCII art using alpha mask for background."""
+        pixels = np.array(image)
+        mask_pixels = np.array(mask)
+        color_pixels = np.array(color_image)
+        ascii_str = []
+
+        for row_idx, row in enumerate(pixels):
+            ascii_row = []
+            for col_idx, pixel in enumerate(row):
+                if mask_pixels[row_idx][col_idx] < 128:  # Background
+                    ascii_row.append(' ')
+                else:
+                    # Get character based on mode
+                    if pattern_mode:
+                        char = chars[col_idx % len(chars)]
+                    else:
+                        intensity_levels = 255 / (len(chars) - 1)
+                        char_index = int(pixel / intensity_levels)
+                        char = chars[char_index]
+
+                    # Apply color
+                    rgb = color_pixels[row_idx][col_idx]
+                    colored_char = self._color_modes[color_mode](char, rgb)
+                    ascii_row.append(colored_char)
+
+            ascii_str.append(''.join(ascii_row))
+
+        return '\n'.join(ascii_str) + Style.RESET_ALL
+
     
     def _rgb_to_ansi(self, r: int, g: int, b: int) -> str:
         """Convert RGB to closest ANSI color code."""

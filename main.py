@@ -39,6 +39,7 @@ class ASCIIArtGenerator:
         width: Optional[int] = None,
         remove_bg: bool = False,
         pattern_mode: bool = False,
+        color_mode: str = 'none',
         chars: Optional[str] = None,
         **kwargs
     ) -> str:
@@ -50,7 +51,8 @@ class ASCIIArtGenerator:
             output_path: Path for output file (optional)
             width: Width of output ASCII art
             remove_bg: Whether to remove background
-            pattern_mode: Use characters as repeating pattern instead of gradient
+            pattern_mode: Use characters as repeating pattern instead of gradient'
+            color_mode: Color mode for ASCII art
             chars: Custom characters for ASCII conversion
             **kwargs: Additional processing parameters
         """
@@ -69,17 +71,22 @@ class ASCIIArtGenerator:
                 width=ascii_settings.width,
                 remove_bg=remove_bg,
                 chars=char_list,
-                pattern_mode=pattern_mode 
+                pattern_mode=pattern_mode, 
+                color_mode=color_mode
                 
             )
 
             # Save output if path provided
             if output_path:
                 metadata = self._create_metadata(
-                    image_path, ascii_settings, chars, kwargs
-                )
+                        image_path=image_path,
+                        ascii_settings=ascii_settings,
+                        custom_chars=chars,
+                        color_mode=color_mode,
+                        pattern_mode=pattern_mode,
+                        extra_params=kwargs
+                    )
                 self.file_handler.save_ascii_art(ascii_art, output_path, metadata)
-
             return ascii_art
 
         except Exception as e:
