@@ -1,0 +1,47 @@
+{
+    "ascii_art": {
+        "width": 100,
+        "height": null,
+        "maintain_aspect_ratio": true,
+        "remove_background": false,
+        "invert": false,
+        "brightness": 1.0,
+        "contrast": 1.0
+    },
+    "character": {
+        "default_chars": "@#S%?*+;:,.",
+        "custom_chars": null,
+        "min_chars": 2,
+        "max_chars": 50,
+        "allow_spaces": true,
+        "allow_special": true,
+        "use_color": false
+    },
+    "output": {
+        "output_dir": "output",
+        "temp_dir": "temp",
+        "backup_dir": "backups",
+        "format": "txt",
+        "create_backup": true,
+        "include_metadata": true,
+        "save_original": true
+    },
+    "supported_image_formats": [
+        ".png",
+        ".jpeg",
+        ".bmp",
+        ".gif",
+        ".jpg"
+    ],
+    "max_image_size": [
+        5000,
+        5000
+    ],
+    "min_image_size": [
+        10,
+        10
+    ],
+    "debug_mode": false,
+    "version": "1.0.0",
+    "last_modified": "2025-01-26T20:05:18.829326"
+}
