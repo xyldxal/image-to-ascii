@@ -155,13 +155,13 @@ class ImageProcessor:
                     char = chars[char_index]
 
                 # Get color
-                rgb = tuple(map(int, color_pixels[row_idx][col_idx]))
+                rgb = color_pixels[row_idx][col_idx]
                 colored_char = self._color_modes[color_mode](char, rgb)
                 ascii_row.append(colored_char)
 
             ascii_str.append(''.join(ascii_row))
         
-        return '\n'.join(ascii_str) + "\033[0m" 
+        return '\n'.join(ascii_str) + Style.RESET_ALL
 
     def _convert_to_ascii_with_mask(
         self,
@@ -193,54 +193,59 @@ class ImageProcessor:
                         char = chars[char_index]
 
                     # Apply color
-                    rgb = tuple(map(int, color_pixels[row_idx][col_idx]))
+                    rgb = color_pixels[row_idx][col_idx]
                     colored_char = self._color_modes[color_mode](char, rgb)
                     ascii_row.append(colored_char)
 
-
             ascii_str.append(''.join(ascii_row))
 
-        return '\n'.join(ascii_str) + "\033[0m"
+        return '\n'.join(ascii_str) + Style.RESET_ALL
 
     
-    def _rgb_to_256(self, r: int, g: int, b: int) -> int:
-        """
-        Convert RGB values to 256-color code.
-        Returns color index (0-255).
-        """
-        # Convert to 0-5 range for each component
-        r = int((r * 5) / 255)
-        g = int((g * 5) / 255)
-        b = int((b * 5) / 255)
+    def _rgb_to_ansi(self, r: int, g: int, b: int) -> str:
+        """Convert RGB to closest ANSI color code."""
+        # Convert RGB to HSV
+        h, s, v = colorsys.rgb_to_hsv(r/255, g/255, b/255)
         
-        # Calculate 256-color code
-        return 16 + (36 * r) + (6 * g) + b
+        # Simple color matching
+        if s < 0.2:
+            if v < 0.5:
+                return Fore.WHITE
+            return Fore.BLACK
+        
+        h *= 360
+        if h < 30:
+            return Fore.RED
+        elif h < 90:
+            return Fore.YELLOW
+        elif h < 150:
+            return Fore.GREEN
+        elif h < 210:
+            return Fore.CYAN
+        elif h < 270:
+            return Fore.BLUE
+        elif h < 330:
+            return Fore.MAGENTA
+        else:
+            return Fore.RED
 
-    def _get_color_escape(self, r: int, g: int, b: int, background: bool = False) -> str:
-        """
-        Get ANSI escape sequence for 256-color.
-        """
-        color_code = self._rgb_to_256(r, g, b)
-        return f"\033[{48 if background else 38};5;{color_code}m"
-
-    def _no_color(self, char: str, rgb: Tuple[int, int, int]) -> str:
+    def _no_color(self, char: str, rgb: tuple) -> str:
         """Return character without color."""
         return char
 
-    def _foreground_color(self, char: str, rgb: Tuple[int, int, int]) -> str:
-        """Apply 256-color foreground."""
-        return f"{self._get_color_escape(*rgb)}{char}"
+    def _foreground_color(self, char: str, rgb: tuple) -> str:
+        """Apply foreground color to character."""
+        return f"{self._rgb_to_ansi(*rgb)}{char}"
 
-    def _background_color(self, char: str, rgb: Tuple[int, int, int]) -> str:
-        """Apply 256-color background."""
-        return f"{self._get_color_escape(*rgb, background=True)}{char}"
+    def _background_color(self, char: str, rgb: tuple) -> str:
+        """Apply background color to character."""
+        return f"{self._rgb_to_ansi(*rgb).replace('Fore', 'Back')}{char}"
 
-    def _both_color(self, char: str, rgb: Tuple[int, int, int]) -> str:
-        """Apply both 256-color foreground and background."""
-        # Adjust background color to be slightly different for visibility
-        bg_rgb = tuple(max(0, min(255, v + 20)) for v in rgb)
-        return f"{self._get_color_escape(*rgb)}{self._get_color_escape(*bg_rgb, background=True)}{char}"
-
+    def _both_color(self, char: str, rgb: tuple) -> str:
+        """Apply both foreground and background color."""
+        fg = self._rgb_to_ansi(*rgb)
+        bg = fg.replace('Fore', 'Back')
+        return f"{fg}{bg}{char}"
     
     def process_gif(
         self,
