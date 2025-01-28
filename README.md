@@ -1,4 +1,5 @@
 # Image to ASCII Generator
+> By Marxel Abogado
 
 ## Features
 
@@ -50,6 +51,7 @@ python main.py path/to/img.jpg --output art.txt
 ```
 
 ## Options
+
 | Option | Description |
 | ----------- | ----------- |
 | ```--h, --help``` | Show help message and exit |
@@ -60,8 +62,3 @@ python main.py path/to/img.jpg --output art.txt
 | ```--color {none,foreground,background,both}``` | Color mode for ASCII art |
 | ```--fps``` | Frames per second for GIF animation |
 | ```--format``` | Output format |
-
-
-
-
-
