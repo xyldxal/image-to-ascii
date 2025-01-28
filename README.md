@@ -50,6 +50,7 @@ python main.py path/to/img.jpg --output art.txt
 ```
 
 | Option | Description |
+| ----------- | ----------- |
 | ```--h, --help``` | Show help message and exit |
 | ```--width``` | Width of ASCII art |
 | ```--chars``` | Custom characters for ASCII conversion |
