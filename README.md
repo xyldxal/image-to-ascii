@@ -49,6 +49,7 @@ python main.py path/to/img.jpg --output art.txt
 
 ```
 
+## Options
 | Option | Description |
 | ----------- | ----------- |
 | ```--h, --help``` | Show help message and exit |
